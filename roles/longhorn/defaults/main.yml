@@ -1,0 +1,13 @@
+---
+longhorn_generate_iscsi_iname: false
+
+longhorn_s3_backup_enabled: false
+longhorn_s3_backup_secret_name: s3-backup-target
+
+longhorn_s3_backup_bucket: longhorn-backup-k8s-test
+longhorn_s3_backup_region: eu-west-1
+longhorn_s3_backup_path: /
+
+longhorn_s3_backup_key_id: ""
+longhorn_s3_backup_key_secret: ""
+longhorn_s3_backup_endpoint: ""

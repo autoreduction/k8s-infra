@@ -1,0 +1,2 @@
+---
+longhorn_s3_backup_target: "s3://{{ longhorn_s3_backup_bucket }}@{{ longhorn_s3_backup_region }}{{ longhorn_s3_backup_path }}"

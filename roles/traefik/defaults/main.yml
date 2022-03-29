@@ -1,0 +1,16 @@
+---
+traefik_ports:
+  traefik:
+    port: 9000
+    protocol: TCP
+    expose: false
+  web:
+    port: 8000
+    protocol: TCP
+    expose: true
+    exposedPort: 80
+  websecure:
+    port: 8443
+    protocol: TCP
+    expose: true
+    exposedPort: 443

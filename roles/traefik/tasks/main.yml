@@ -1,0 +1,20 @@
+---
+- name: Deployment
+  delegate_to: localhost
+  run_once: true
+  block:
+    - name: Ensure Helm repository is available
+      kubernetes.core.helm_repository:
+        name: traefik
+        repo_url: https://helm.traefik.io/traefik
+        state: present
+
+    - name: Ensure Traefik is deployed
+      kubernetes.core.helm:
+        update_repo_cache: true
+        name: traefik
+        namespace: traefik
+        create_namespace: true
+        chart_ref: traefik/traefik
+        release_values: "{{ traefik_values }}"
+        state: present
