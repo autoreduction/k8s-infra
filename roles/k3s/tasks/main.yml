@@ -1,0 +1,50 @@
+---
+- name: Ensure K8s API is allowed through firewall
+  become: true
+  community.general.ufw:
+    rule: allow
+    port: 6443
+    proto: tcp
+    comment: K8s - API
+
+- name: Ensure Flannel WireGuard is allowed through firewall
+  become: true
+  community.general.ufw:
+    rule: allow
+    port: 51820
+    proto: udp
+    comment: K8s - Flannel VXLAN
+
+- name: Ensure Kubelet metrics is allowed through firewall
+  become: true
+  community.general.ufw:
+    rule: allow
+    port: 10250
+    proto: tcp
+    comment: K8s - Kublet metrics
+
+- name: Enable IPv4 forwarding
+  become: true
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: "1"
+    state: present
+    reload: true
+
+- name: Download K3s binary
+  become: true
+  ansible.builtin.get_url:
+    url: "https://github.com/k3s-io/k3s/releases/download/{{ k3s_version }}/k3s"
+    checksum: "sha256:https://github.com/k3s-io/k3s/releases/download/{{ k3s_version }}/sha256sum-amd64.txt"
+    dest: /usr/local/bin/k3s
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Include tasks for controller
+  ansible.builtin.include_tasks: controller.yml
+  when: inventory_hostname in groups['k8s_controller']
+
+- name: Include tasks for node
+  ansible.builtin.include_tasks: node.yml
+  when: inventory_hostname in groups['k8s_node']

@@ -1,0 +1,7 @@
+---
+- name: Core cluster services deployment
+  hosts: k8s_cluster
+
+  roles:
+    - traefik
+    - longhorn

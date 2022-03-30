@@ -1,0 +1,34 @@
+---
+- name: System configuration
+  hosts: all
+
+  roles:
+    - dannixon.system.package_updates
+    - dannixon.system.system
+    - dannixon.system.inspection_tools
+    - dannixon.services.sshd
+
+  tasks:
+    - name: Ensure interactive users are present
+      ansible.builtin.include_role:
+        name: dannixon.system.interactive_user
+      vars:
+        interactive_user_username: "{{ user.username }}"
+        interactive_user_ssh_key: "{{ user.ssh_pubkey }}"
+      loop: "{{ interactive_users }}"
+      loop_control:
+        loop_var: user
+        label: "{{ user.username }}"
+
+    - name: Ensure firewall is enabled
+      become: true
+      community.general.ufw:
+        state: enabled
+        policy: deny
+
+    - name: Ensure SSH is allowed through firewall
+      become: true
+      community.general.ufw:
+        rule: limit
+        port: ssh
+        proto: tcp

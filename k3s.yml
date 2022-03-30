@@ -1,0 +1,20 @@
+---
+- name: K3s controller deployment
+  hosts: k8s_controller
+
+  roles:
+    - k3s
+
+  tasks:
+    - name: Save kubeconfig to localhost
+      delegate_to: localhost
+      ansible.builtin.copy:
+        content: "{{ kubeconfig }}"
+        dest: "{{ lookup('env', 'KUBECONFIG') }}"
+        mode: "u=rw,g=,o="
+
+- name: K3s node deployment
+  hosts: k8s_node
+
+  roles:
+    - k3s
