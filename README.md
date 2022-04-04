@@ -30,3 +30,10 @@ The location you choose for `<SECURE PATH>` should actually be somewhere secure,
 5. `export KUBECONFIG=/<SECURE PATH>/kubeconfig`
 6. `ansible-playbook -K k3s.yml`
 7. `ansible-playbook -K services.yml -e longhorn_generate_iscsi_iname=true`
+
+## Getting `kubeconfig`
+
+1. `ansible-galaxy install -r requirements.yml`
+2. `export KUBECONFIG=/<SECURE PATH>/kubeconfig`
+3. `ansible-playbook -K k3s.yml -l k8s_controller`j
+4. `kubectl cluster-info`
