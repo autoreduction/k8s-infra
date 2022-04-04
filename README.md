@@ -23,7 +23,7 @@ Container infrastructure on which Autoreduction is deployed.
 When asked for a sudo password, use your Fed ID password.
 The location you choose for `<SECURE PATH>` should actually be somewhere secure, if in doubt, use `/tmp` and put up with having to run step 6 again to get another copy.
 
-1. Ensure the [inventory](./inventory.ini) is up to date
+1. Ensure the [inventory](./inventory.ini) is up to date and that the correct user is specified for `ansible_user`
 2. Ensure the [user](./group_vars/all/users.yml) configuration is up to date
 3. `ansible-galaxy install -r requirements.yml`
 4. `ansible-playbook -K system.yml -e system_reboot=true`
@@ -33,7 +33,5 @@ The location you choose for `<SECURE PATH>` should actually be somewhere secure,
 
 ## Getting `kubeconfig`
 
-1. `ansible-galaxy install -r requirements.yml`
-2. `export KUBECONFIG=/<SECURE PATH>/kubeconfig`
-3. `ansible-playbook -K k3s.yml -l k8s_controller`j
-4. `kubectl cluster-info`
+1. Steps 1, 3 and 5 from the Deployment instructions
+2. `kubectl cluster-info`
