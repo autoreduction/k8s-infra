@@ -34,4 +34,5 @@ The location you choose for `<SECURE PATH>` should actually be somewhere secure,
 ## Getting `kubeconfig`
 
 1. Steps 1, 3 and 5 from the Deployment instructions
-2. `kubectl cluster-info`
+2. `ansible-playbook -K --ask-vault-pass k3s.yml -l k8s_controller`
+3. `kubectl cluster-info`
