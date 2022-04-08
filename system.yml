@@ -7,6 +7,8 @@
     - dannixon.system.system
     - dannixon.system.inspection_tools
     - dannixon.services.sshd
+    - isis_archive
+    - isis_cephfs
 
   tasks:
     - name: Ensure interactive users are present

@@ -26,10 +26,10 @@ The location you choose for `<SECURE PATH>` should actually be somewhere secure,
 1. Ensure the [inventory](./inventory.ini) is up to date and that the correct user is specified for `ansible_user`
 2. Ensure the [user](./group_vars/all/users.yml) configuration is up to date
 3. `ansible-galaxy install -r requirements.yml`
-4. `ansible-playbook -K system.yml -e system_reboot=true`
+4. `ansible-playbook -K --ask-vault-pass system.yml -e system_reboot=true`
 5. `export KUBECONFIG=/<SECURE PATH>/kubeconfig`
-6. `ansible-playbook -K k3s.yml`
-7. `ansible-playbook -K services.yml -e longhorn_generate_iscsi_iname=true`
+6. `ansible-playbook -K --ask-vault-pass k3s.yml`
+7. `ansible-playbook -K --ask-vault-pass services.yml -e longhorn_generate_iscsi_iname=true`
 
 ## Getting `kubeconfig`
 

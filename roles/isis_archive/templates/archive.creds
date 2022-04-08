@@ -1,0 +1,3 @@
+domain={{ isis_archive_secrets.domain }}
+username={{ isis_archive_secrets.username }}
+password={{ isis_archive_secrets.password }}
