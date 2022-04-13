@@ -1,0 +1,51 @@
+---
+- name: Ensure dependencies are installed
+  become: true
+  ansible.builtin.package:
+    name: cifs-utils
+    state: present
+
+- name: Create mountpoint
+  become: true
+  ansible.builtin.file:
+    path: /isis
+    state: directory
+    mode: "u=rwx,g=rx,o=rx"
+
+- name: Ensure credentials file is present
+  become: true
+  ansible.builtin.template:
+    src: archive.creds
+    dest: /
+    owner: root
+    group: root
+    mode: "u=rwx,g=,o="
+
+- name: Ensure DNS configuration is appropriate for ISIS data archive
+  become: true
+  ansible.builtin.copy:
+    src: resolved.conf
+    dest: /etc/systemd
+    mode: "u=rw,g=r,o=r"
+
+- name: Restart resolved to ensure DNS configuration is up to date
+  become: true
+  ansible.builtin.service:
+    name: systemd-resolved.service
+    state: restarted
+
+- name: Ensure mount is configured
+  become: true
+  ansible.builtin.mount:
+    path: /isis
+    src: "//isis.cclrc.ac.uk/inst$/"
+    fstype: cifs
+    opts: "noserverino,vers=2.1,credentials=/archive.creds,_netdev"
+    state: mounted
+
+- name: Ensure /archive symlink is present
+  become: true
+  ansible.builtin.file:
+    src: /isis
+    dest: /archive
+    state: link

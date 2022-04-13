@@ -1,0 +1,32 @@
+---
+- name: Ensure dependencies are installed
+  become: true
+  ansible.builtin.package:
+    name: ceph
+    state: present
+
+- name: Create mountpoint
+  become: true
+  ansible.builtin.file:
+    path: /instrument
+    state: directory
+    mode: "u=rwx,g=rx,o=rx"
+
+- name: Ensure key is present
+  become: true
+  ansible.builtin.copy:
+    content: |
+      {{ ceph_secrets.key }}
+    dest: /etc/ceph/deneb.key
+    owner: root
+    group: root
+    mode: "u=r,g=,o="
+
+- name: Ensure mount is configured
+  become: true
+  ansible.builtin.mount:
+    path: /instrument
+    src: deneb-mon1.nubes.rl.ac.uk,deneb-mon2.nubes.rl.ac.uk,deneb-mon3.nubes.rl.ac.uk:/isis/instrument
+    fstype: ceph
+    opts: "name=isis_autoreduce,secretfile=/etc/ceph/deneb.key,noatime,_netdev"
+    state: mounted
