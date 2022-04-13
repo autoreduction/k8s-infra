@@ -5,3 +5,4 @@
   roles:
     - traefik
     - longhorn
+    - grafana_agent

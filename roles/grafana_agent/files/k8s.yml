@@ -1,0 +1,154 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: grafana-agent
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: grafana-agent
+  namespace: grafana-agent
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: grafana-agent
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+      - nodes/proxy
+      - services
+      - endpoints
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+  - nonResourceURLs:
+      - /metrics
+    verbs:
+      - get
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: grafana-agent
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: grafana-agent
+subjects:
+  - kind: ServiceAccount
+    name: grafana-agent
+    namespace: grafana-agent
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-agent
+  namespace: grafana-agent
+spec:
+  selector:
+    matchLabels:
+      name: grafana-agent
+  minReadySeconds: 10
+  replicas: 1
+  revisionHistoryLimit: 10
+  template:
+    metadata:
+      labels:
+        name: grafana-agent
+    spec:
+      containers:
+        - name: agent
+          image: grafana/agent:latest
+          imagePullPolicy: Always
+          args:
+            - -config.file=/etc/agent/agent.yml
+          command:
+            - /bin/agent
+          env:
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          ports:
+            - containerPort: 12345
+              name: http
+          volumeMounts:
+            - mountPath: /etc/agent
+              name: grafana-agent-metrics
+      serviceAccount: grafana-agent
+      volumes:
+        - configMap:
+            name: grafana-agent-metrics
+          name: grafana-agent-metrics
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: grafana-agent-logs
+  namespace: grafana-agent
+spec:
+  selector:
+    matchLabels:
+      name: grafana-agent-logs
+  minReadySeconds: 10
+  template:
+    metadata:
+      labels:
+        name: grafana-agent-logs
+    spec:
+      containers:
+        - name: agent
+          image: grafana/agent:latest
+          imagePullPolicy: Always
+          args:
+            - -config.file=/etc/agent/agent.yml
+          command:
+            - /bin/agent
+          env:
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          ports:
+            - containerPort: 8080
+              name: http
+          securityContext:
+            privileged: true
+            runAsUser: 0
+          volumeMounts:
+            - name: grafana-agent-logs
+              mountPath: /etc/agent
+              readOnly: true
+            - name: varlog
+              mountPath: /var/log
+              readOnly: true
+            - name: etcmachineid
+              mountPath: /etc/machine-id
+              readOnly: true
+      serviceAccount: grafana-agent
+      tolerations:
+        - effect: NoSchedule
+          operator: Exists
+      volumes:
+        - name: grafana-agent-logs
+          configMap:
+            name: grafana-agent-logs
+        - name: varlog
+          hostPath:
+            path: /var/log
+        - name: etcmachineid
+          hostPath:
+            path: /etc/machine-id
+  updateStrategy:
+    type: RollingUpdate

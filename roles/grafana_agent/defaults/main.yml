@@ -1,0 +1,6 @@
+---
+k8s_grafana_agent_cluster_name: cluster_mc_clusterface
+
+k8s_grafana_agent_metrics_remote_write: []
+
+k8s_grafana_agent_logs_clients: []

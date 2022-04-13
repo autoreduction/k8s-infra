@@ -1,0 +1,333 @@
+---
+k8s_grafana_agent_metrics_config:
+  server:
+    http_listen_port: 12345
+  prometheus:
+    wal_directory: /tmp/grafana-agent-wal
+    global:
+      scrape_interval: 1m
+      external_labels:
+        cluster: "{{ k8s_grafana_agent_cluster_name }}"
+    configs:
+      - name: default
+        remote_write: "{{ k8s_grafana_agent_metrics_remote_write }}"
+        scrape_configs:
+          - job_name: kubernetes/traefik
+            static_configs:
+              - targets:
+                  - traefik.traefik.svc.cluster.local:9101
+          - job_name: kubernetes/cadvisor
+            bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+            kubernetes_sd_configs:
+              - role: node
+            metric_relabel_configs:
+              - action: drop
+                regex: container_([a-z_]+);
+                source_labels:
+                  - __name__
+                  - image
+              - action: drop
+                regex: container_(network_tcp_usage_total|network_udp_usage_total|tasks_state|cpu_load_average_10s)
+                source_labels:
+                  - __name__
+            relabel_configs:
+              - replacement: kubernetes.default.svc:443
+                target_label: __address__
+              - regex: (.+)
+                replacement: /api/v1/nodes/$1/proxy/metrics/cadvisor
+                source_labels:
+                  - __meta_kubernetes_node_name
+                target_label: __metrics_path__
+            scheme: https
+            tls_config:
+              ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+              insecure_skip_verify: false
+              server_name: kubernetes
+          - job_name: kubernetes/kubelet
+            bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+            kubernetes_sd_configs:
+              - role: node
+            relabel_configs:
+              - replacement: kubernetes.default.svc:443
+                target_label: __address__
+              - regex: (.+)
+                replacement: /api/v1/nodes/$1/proxy/metrics
+                source_labels:
+                  - __meta_kubernetes_node_name
+                target_label: __metrics_path__
+            scheme: https
+            tls_config:
+              ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+              insecure_skip_verify: false
+              server_name: kubernetes
+
+k8s_grafana_agent_logs_config:
+  server:
+    http_listen_port: 8080
+    log_level: info
+  loki:
+    configs:
+      - name: default
+        clients: "{{ k8s_grafana_agent_logs_clients }}"
+        scrape_configs:
+          - job_name: system
+            journal:
+              labels:
+                job: systemd-journal
+            relabel_configs:
+              - source_labels:
+                  - __journal__hostname
+                target_label: host
+              - source_labels:
+                  - __journal__systemd_unit
+                target_label: systemd_unit
+              - source_labels:
+                  - __journal_syslog_identifier
+                target_label: syslog_identifier
+          - job_name: kubernetes/pods-name
+            kubernetes_sd_configs:
+              - role: pod
+            pipeline_stages:
+              - cri: {}
+            relabel_configs:
+              - source_labels:
+                  - __meta_kubernetes_pod_label_name
+                target_label: __service__
+              - source_labels:
+                  - __meta_kubernetes_pod_node_name
+                target_label: host
+              - action: drop
+                regex: ""
+                source_labels:
+                  - __service__
+              - action: labelmap
+                regex: __meta_kubernetes_pod_label_(.+)
+              - action: replace
+                replacement: $1
+                separator: /
+                source_labels:
+                  - __meta_kubernetes_namespace
+                  - __service__
+                target_label: job
+              - action: replace
+                source_labels:
+                  - __meta_kubernetes_namespace
+                target_label: namespace
+              - action: replace
+                source_labels:
+                  - __meta_kubernetes_pod_name
+                target_label: pod
+              - action: replace
+                source_labels:
+                  - __meta_kubernetes_pod_container_name
+                target_label: container
+              - replacement: /var/log/pods/*$1/*.log
+                separator: /
+                source_labels:
+                  - __meta_kubernetes_pod_uid
+                  - __meta_kubernetes_pod_container_name
+                target_label: __path__
+          - job_name: kubernetes/pods-app
+            kubernetes_sd_configs:
+              - role: pod
+            pipeline_stages:
+              - cri: {}
+            relabel_configs:
+              - action: drop
+                regex: .+
+                source_labels:
+                  - __meta_kubernetes_pod_label_name
+              - source_labels:
+                  - __meta_kubernetes_pod_label_app
+                target_label: __service__
+              - source_labels:
+                  - __meta_kubernetes_pod_node_name
+                target_label: host
+              - action: drop
+                regex: ""
+                source_labels:
+                  - __service__
+              - action: labelmap
+                regex: __meta_kubernetes_pod_label_(.+)
+              - action: replace
+                replacement: $1
+                separator: /
+                source_labels:
+                  - __meta_kubernetes_namespace
+                  - __service__
+                target_label: job
+              - action: replace
+                source_labels:
+                  - __meta_kubernetes_namespace
+                target_label: namespace
+              - action: replace
+                source_labels:
+                  - __meta_kubernetes_pod_name
+                target_label: pod
+              - action: replace
+                source_labels:
+                  - __meta_kubernetes_pod_container_name
+                target_label: container
+              - replacement: /var/log/pods/*$1/*.log
+                separator: /
+                source_labels:
+                  - __meta_kubernetes_pod_uid
+                  - __meta_kubernetes_pod_container_name
+                target_label: __path__
+          - job_name: kubernetes/pods-direct-controllers
+            kubernetes_sd_configs:
+              - role: pod
+            pipeline_stages:
+              - cri: {}
+            relabel_configs:
+              - action: drop
+                regex: .+
+                separator: ""
+                source_labels:
+                  - __meta_kubernetes_pod_label_name
+                  - __meta_kubernetes_pod_label_app
+              - action: drop
+                regex: '[0-9a-z-.]+-[0-9a-f]{8,10}'
+                source_labels:
+                  - __meta_kubernetes_pod_controller_name
+              - source_labels:
+                  - __meta_kubernetes_pod_controller_name
+                target_label: __service__
+              - source_labels:
+                  - __meta_kubernetes_pod_node_name
+                target_label: host
+              - action: drop
+                regex: ""
+                source_labels:
+                  - __service__
+              - action: labelmap
+                regex: __meta_kubernetes_pod_label_(.+)
+              - action: replace
+                replacement: $1
+                separator: /
+                source_labels:
+                  - __meta_kubernetes_namespace
+                  - __service__
+                target_label: job
+              - action: replace
+                source_labels:
+                  - __meta_kubernetes_namespace
+                target_label: namespace
+              - action: replace
+                source_labels:
+                  - __meta_kubernetes_pod_name
+                target_label: pod
+              - action: replace
+                source_labels:
+                  - __meta_kubernetes_pod_container_name
+                target_label: container
+              - replacement: /var/log/pods/*$1/*.log
+                separator: /
+                source_labels:
+                  - __meta_kubernetes_pod_uid
+                  - __meta_kubernetes_pod_container_name
+                target_label: __path__
+          - job_name: kubernetes/pods-indirect-controller
+            kubernetes_sd_configs:
+              - role: pod
+            pipeline_stages:
+              - cri: {}
+            relabel_configs:
+              - action: drop
+                regex: .+
+                separator: ""
+                source_labels:
+                  - __meta_kubernetes_pod_label_name
+                  - __meta_kubernetes_pod_label_app
+              - action: keep
+                regex: '[0-9a-z-.]+-[0-9a-f]{8,10}'
+                source_labels:
+                  - __meta_kubernetes_pod_controller_name
+              - action: replace
+                regex: ([0-9a-z-.]+)-[0-9a-f]{8,10}
+                source_labels:
+                  - __meta_kubernetes_pod_controller_name
+                target_label: __service__
+              - source_labels:
+                  - __meta_kubernetes_pod_node_name
+                target_label: host
+              - action: drop
+                regex: ""
+                source_labels:
+                  - __service__
+              - action: labelmap
+                regex: __meta_kubernetes_pod_label_(.+)
+              - action: replace
+                replacement: $1
+                separator: /
+                source_labels:
+                  - __meta_kubernetes_namespace
+                  - __service__
+                target_label: job
+              - action: replace
+                source_labels:
+                  - __meta_kubernetes_namespace
+                target_label: namespace
+              - action: replace
+                source_labels:
+                  - __meta_kubernetes_pod_name
+                target_label: pod
+              - action: replace
+                source_labels:
+                  - __meta_kubernetes_pod_container_name
+                target_label: container
+              - replacement: /var/log/pods/*$1/*.log
+                separator: /
+                source_labels:
+                  - __meta_kubernetes_pod_uid
+                  - __meta_kubernetes_pod_container_name
+                target_label: __path__
+          - job_name: kubernetes/pods-static
+            kubernetes_sd_configs:
+              - role: pod
+            pipeline_stages:
+              - cri: {}
+            relabel_configs:
+              - action: drop
+                regex: ""
+                source_labels:
+                  - __meta_kubernetes_pod_annotation_kubernetes_io_config_mirror
+              - action: replace
+                source_labels:
+                  - __meta_kubernetes_pod_label_component
+                target_label: __service__
+              - source_labels:
+                  - __meta_kubernetes_pod_node_name
+                target_label: host
+              - action: drop
+                regex: ""
+                source_labels:
+                  - __service__
+              - action: labelmap
+                regex: __meta_kubernetes_pod_label_(.+)
+              - action: replace
+                replacement: $1
+                separator: /
+                source_labels:
+                  - __meta_kubernetes_namespace
+                  - __service__
+                target_label: job
+              - action: replace
+                source_labels:
+                  - __meta_kubernetes_namespace
+                target_label: namespace
+              - action: replace
+                source_labels:
+                  - __meta_kubernetes_pod_name
+                target_label: pod
+              - action: replace
+                source_labels:
+                  - __meta_kubernetes_pod_container_name
+                target_label: container
+              - replacement: /var/log/pods/*$1/*.log
+                separator: /
+                source_labels:
+                  - __meta_kubernetes_pod_annotation_kubernetes_io_config_mirror
+                  - __meta_kubernetes_pod_container_name
+                target_label: __path__
+    positions_directory: /tmp/positions

@@ -1,0 +1,14 @@
+---
+k8s_grafana_agent_cluster_name: ar-k8s
+
+k8s_grafana_agent_metrics_remote_write:
+  - url: https://prometheus-prod-01-eu-west-0.grafana.net/api/prom/push
+    basic_auth:
+      username: "{{ grafana_cloud_secrets.metrics_username }}"
+      password: "{{ grafana_cloud_secrets.api_key }}"
+
+k8s_grafana_agent_logs_clients:
+  - url: https://logs-prod-eu-west-0.grafana.net/loki/api/v1/push
+    basic_auth:
+      username: "{{ grafana_cloud_secrets.logs_username }}"
+      password: "{{ grafana_cloud_secrets.api_key }}"

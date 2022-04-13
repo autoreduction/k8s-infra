@@ -1,0 +1,39 @@
+---
+- name: Deployment
+  delegate_to: localhost
+  run_once: true
+  block:
+    - name: Ensure namespace is created
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: grafana-agent
+        state: present
+
+    - name: Ensure configuration is present
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: "{{ configmap.name }}"
+            namespace: grafana-agent
+          data:
+            agent.yml: |
+              {{ configmap.data | to_nice_yaml }}
+        state: present
+      loop:
+        - name: grafana-agent-metrics
+          data: "{{ k8s_grafana_agent_metrics_config }}"
+        - name: grafana-agent-logs
+          data: "{{ k8s_grafana_agent_logs_config }}"
+      loop_control:
+        loop_var: configmap
+        label: "{{ configmap.name }}"
+
+    - name: Ensure deployment
+      kubernetes.core.k8s:
+        src: k8s.yml
+        state: present
