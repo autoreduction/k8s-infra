@@ -48,11 +48,61 @@ subjects:
     name: grafana-agent
     namespace: grafana-agent
 
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: grafana-agent-metrics
+#   namespace: grafana-agent
+# spec:
+#   selector:
+#     matchLabels:
+#       name: grafana-agent
+#   minReadySeconds: 10
+#   replicas: 1
+#   revisionHistoryLimit: 10
+#   template:
+#     metadata:
+#       labels:
+#         name: grafana-agent
+#     spec:
+#       containers:
+#         - name: agent
+#           image: grafana/agent:latest
+#           imagePullPolicy: Always
+#           args:
+#             - -config.file=/etc/agent/agent.yml
+#           command:
+#             - /bin/agent
+#           resources:
+#             requests:
+#               memory: 30Mi
+#               cpu: 100m
+#             limits:
+#               memory: 50Mi
+#               cpu: 200m
+#           env:
+#             - name: HOSTNAME
+#               valueFrom:
+#                 fieldRef:
+#                   fieldPath: spec.nodeName
+#           ports:
+#             - containerPort: 12345
+#               name: http
+#           volumeMounts:
+#             - mountPath: /etc/agent
+#               name: grafana-agent-metrics
+#       serviceAccount: grafana-agent
+#       volumes:
+#         - configMap:
+#             name: grafana-agent-metrics
+#           name: grafana-agent-metrics
+
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: grafana-agent
+  name: grafana-agent-metrics-node
   namespace: grafana-agent
 spec:
   selector:
@@ -74,6 +124,15 @@ spec:
             - -config.file=/etc/agent/agent.yml
           command:
             - /bin/agent
+          resources:
+            requests:
+              memory: 30Mi
+              cpu: 100m
+            limits:
+              memory: 50Mi
+              cpu: 200m
+          hostPID: true
+          hostNetwork: true
           env:
             - name: HOSTNAME
               valueFrom:
@@ -84,12 +143,30 @@ spec:
               name: http
           volumeMounts:
             - mountPath: /etc/agent
-              name: grafana-agent-metrics
+              name: grafana-agent-metrics-node
+            - name: root
+              readOnly:  true
+              mountPath: /host/root
+            - name: sys
+              readOnly: true
+              mountPath: /host/sys
+            - name: proc
+              readOnly:  true
+              mountPath: /host/proc
       serviceAccount: grafana-agent
       volumes:
         - configMap:
-            name: grafana-agent-metrics
-          name: grafana-agent-metrics
+            name: grafana-agent-metrics-node
+          name: grafana-agent-metrics-node
+        - name: root
+          hostPath:
+            path: /
+        - name: sys
+          hostPath:
+            path: /sys
+        - name: proc
+          hostPath:
+            path: /proc
 
 ---
 apiVersion: apps/v1

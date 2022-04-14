@@ -27,6 +27,8 @@
       loop:
         - name: grafana-agent-metrics
           data: "{{ k8s_grafana_agent_metrics_config }}"
+        - name: grafana-agent-metrics-node
+          data: "{{ k8s_grafana_agent_metrics_node_config }}"
         - name: grafana-agent-logs
           data: "{{ k8s_grafana_agent_logs_config }}"
       loop_control:

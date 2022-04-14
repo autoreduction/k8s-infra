@@ -3,6 +3,6 @@
   hosts: k8s_cluster
 
   roles:
-    - traefik
-    - longhorn
+    # - traefik
+    # - longhorn
     - grafana_agent

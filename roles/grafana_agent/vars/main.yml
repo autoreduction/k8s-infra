@@ -61,6 +61,23 @@ k8s_grafana_agent_metrics_config:
               insecure_skip_verify: false
               server_name: kubernetes
 
+k8s_grafana_agent_metrics_node_config:
+  server:
+    http_listen_port: 12345
+  prometheus:
+    wal_directory: /tmp/grafana-agent-wal
+    global:
+      scrape_interval: 1m
+    configs:
+      - name: default
+        remote_write: "{{ k8s_grafana_agent_metrics_remote_write }}"
+  integrations:
+    node_exporter:
+      enabled: true
+      rootfs_path: /host/root
+      sysfs_path: /host/sys
+      procfs_path: /host/proc
+
 k8s_grafana_agent_logs_config:
   server:
     http_listen_port: 8080
