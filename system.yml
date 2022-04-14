@@ -6,22 +6,12 @@
     - dannixon.system.package_updates
     - dannixon.system.system
     - dannixon.system.inspection_tools
+    - dannixon.system.interactive_users
     - dannixon.services.sshd
     - isis_archive
     - isis_cephfs
 
   tasks:
-    - name: Ensure interactive users are present
-      ansible.builtin.include_role:
-        name: dannixon.system.interactive_user
-      vars:
-        interactive_user_username: "{{ user.username }}"
-        interactive_user_ssh_key: "{{ user.ssh_pubkey }}"
-      loop: "{{ interactive_users }}"
-      loop_control:
-        loop_var: user
-        label: "{{ user.username }}"
-
     - name: Ensure firewall is enabled
       become: true
       community.general.ufw:
