@@ -14,3 +14,8 @@ traefik_ports:
     protocol: TCP
     expose: true
     exposedPort: 443
+  mysql:
+    port: 3306
+    protocol: TCP
+    expose: true
+    exposedPort: 3306
