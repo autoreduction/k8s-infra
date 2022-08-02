@@ -2,7 +2,9 @@
 - name: Ensure dependencies are installed
   become: true
   ansible.builtin.package:
-    name: cifs-utils
+    name:
+      - cifs-utils
+      - keyutils
     state: present
 
 - name: Create mountpoint
