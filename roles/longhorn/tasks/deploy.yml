@@ -15,6 +15,7 @@
         namespace: longhorn-system
         create_namespace: true
         chart_ref: longhorn/longhorn
+        chart_version: 1.2.4
         values:
           defaultSettings:
             backupTarget: "{{ longhorn_s3_backup_target if longhorn_s3_backup_enabled else None }}"
