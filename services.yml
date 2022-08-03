@@ -3,5 +3,4 @@
   hosts: k8s_cluster
 
   roles:
-    - traefik
     - longhorn
