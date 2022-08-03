@@ -34,8 +34,3 @@
             AWS_SECRET_ACCESS_KEY: "{{ longhorn_s3_backup_key_secret | b64encode }}"
             AWS_ENDPOINTS: "{{ longhorn_s3_backup_endpoint | b64encode }}"
         state: "{{ 'present' if longhorn_s3_backup_enabled else 'absent' }}"
-
-    - name: Ensure network policies are deployed
-      kubernetes.core.k8s:
-        src: networkpolicy.yml
-        state: present
