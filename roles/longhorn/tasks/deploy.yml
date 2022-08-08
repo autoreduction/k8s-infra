@@ -1,5 +1,5 @@
 ---
-- name: Deployment
+- name: Deployment # noqa var-spacing
   delegate_to: localhost
   run_once: true
   block:
@@ -35,14 +35,14 @@
             AWS_ENDPOINTS: "{{ longhorn_s3_backup_endpoint | b64encode }}"
         state: "{{ 'present' if longhorn_s3_backup_enabled else 'absent' }}"
 
-    - name: Unset default storage class for local-path
+    - name: Unset default storage class for local-path # noqa var-spacing
       ansible.builtin.command: >
         kubectl patch storageclass local-path
         -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
       register: _remove_default_storage_result
       changed_when: not '(no change)' in _remove_default_storage_result.stdout
 
-    - name: Set default storage class to be longhorn
+    - name: Set default storage class to be longhorn # noqa var-spacing
       ansible.builtin.command: >
         kubectl patch storageclass longhorn
         -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
