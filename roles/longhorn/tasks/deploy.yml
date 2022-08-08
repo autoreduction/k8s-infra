@@ -1,5 +1,5 @@
 ---
-- name: Deployment # noqa var-spacing
+- name: Deployment
   delegate_to: localhost
   run_once: true
   block:
@@ -35,7 +35,7 @@
             AWS_ENDPOINTS: "{{ longhorn_s3_backup_endpoint | b64encode }}"
         state: "{{ 'present' if longhorn_s3_backup_enabled else 'absent' }}"
 
-    - name: Unset default storage class for local-path # noqa var-spacing
+    - name: Unset default storage class for local-path
       kubernetes.core.k8s_json_patch:
         kind: StorageClass
         name: local-path
@@ -44,7 +44,7 @@
             path: /metadata/annotations/storageclass.kubernetes.io~1is-default-class
             value: "false"
 
-    - name: Set default storage class to be longhorn # noqa var-spacing
+    - name: Set default storage class to be longhorn
       kubernetes.core.k8s_json_patch:
         kind: StorageClass
         name: longhorn
