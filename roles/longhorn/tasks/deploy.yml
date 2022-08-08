@@ -35,12 +35,16 @@
             AWS_ENDPOINTS: "{{ longhorn_s3_backup_endpoint | b64encode }}"
         state: "{{ 'present' if longhorn_s3_backup_enabled else 'absent' }}"
 
-    - name: Unset local-path provisioner as default storage class
-      ansible.builtin.shell: >
-        kubectl patch storageclass local-path 
+    - name: Unset default storage class for local-path
+      ansible.builtin.command: >
+        kubectl patch storageclass local-path
         -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+      register: _remove_default_storage_result
+      changed_when: not '(no change)' in _remove_default_storage_result.stdout
 
-    - name: Patch longhorn storageclass as default storage class
-      ansible.builtin.shell: >
-        kubectl patch storageclass longhorn 
+    - name: Set default storage class to be longhorn
+      ansible.builtin.command: >
+        kubectl patch storageclass longhorn
         -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+      register: _longhorn_default_storage_result
+      changed_when: not '(no change)' in _longhorn_default_storage_result.stdout
