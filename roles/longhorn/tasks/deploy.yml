@@ -34,3 +34,21 @@
             AWS_SECRET_ACCESS_KEY: "{{ longhorn_s3_backup_key_secret | b64encode }}"
             AWS_ENDPOINTS: "{{ longhorn_s3_backup_endpoint | b64encode }}"
         state: "{{ 'present' if longhorn_s3_backup_enabled else 'absent' }}"
+
+    - name: Unset default storage class for local-path
+      kubernetes.core.k8s_json_patch:
+        kind: StorageClass
+        name: local-path
+        patch:
+          - op: add
+            path: /metadata/annotations/storageclass.kubernetes.io~1is-default-class
+            value: "false"
+
+    - name: Set default storage class to be longhorn
+      kubernetes.core.k8s_json_patch:
+        kind: StorageClass
+        name: longhorn
+        patch:
+          - op: add
+            path: /metadata/annotations/storageclass.kubernetes.io~1is-default-class
+            value: "true"
