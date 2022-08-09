@@ -20,6 +20,7 @@
             backupTarget: "{{ longhorn_s3_backup_target if longhorn_s3_backup_enabled else None }}"
             backupTargetCredentialSecret: "{{ longhorn_s3_backup_secret_name }}"
         state: present
+        wait: true
 
     - name: Ensure S3 configuration is present if required
       kubernetes.core.k8s:
