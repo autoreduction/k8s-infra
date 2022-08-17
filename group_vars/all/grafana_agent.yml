@@ -1,0 +1,56 @@
+---
+grafana_agent_config:
+  integrations:
+    agent:
+      enabled: true
+    node_exporter:
+      enabled: true
+
+  server:
+    log_level: info
+    http_listen_port: 12345
+
+  metrics:
+    wal_directory: /var/lib/grafana-agent
+    global:
+      scrape_interval: 1m
+      remote_write:
+        - url: https://prometheus-prod-01-eu-west-0.grafana.net/api/prom/push
+          basic_auth:
+            username: "{{ grafana_cloud_secrets.prometheus_username }}"
+            password: "{{ grafana_cloud_secrets.token }}"
+          write_relabel_configs:
+            - source_labels:
+                - __name__
+              regex: "up|node_(cpu.*|disk.*|filesystem.*|hwmon.*|load.*|memory.*|network.*|pressure.*)"
+              action: keep
+    configs:
+      - name: default
+        scrape_configs:
+          - job_name: agent
+            static_configs:
+              - targets:
+                  - 127.0.0.1:12345
+
+  logs:
+    configs:
+      - name: default
+        positions:
+          filename: /tmp/positions.yaml
+        clients:
+          - url: "https://{{ grafana_cloud_secrets.loki_username }}:{{ grafana_cloud_secrets.token }}@logs-prod-eu-west-0.grafana.net/loki/api/v1/push"
+        scrape_configs:
+          - job_name: system
+            journal:
+              labels:
+                job: systemd-journal
+            relabel_configs:
+              - source_labels:
+                  - __journal__systemd_unit
+                target_label: systemd_unit
+              - source_labels:
+                  - __journal__hostname
+                target_label: host
+              - source_labels:
+                  - __journal_syslog_identifier
+                target_label: syslog_identifier
