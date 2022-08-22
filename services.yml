@@ -4,3 +4,18 @@
 
   roles:
     - longhorn
+
+  tasks:
+    - name: Ensure Grafana Agent is deployed
+      delegate_to: localhost
+      run_once: true
+      kubernetes.core.k8s:
+        definition: "{{ lookup(item.lookup, item.path) | from_yaml_all | list }}"
+        state: present
+      loop:
+        - lookup: file
+          path: files/grafana-agent-ns.yml
+        - lookup: template
+          path: templates/grafana-agent-config.yml
+        - lookup: file
+          path: files/agent-loki.yaml
