@@ -2,3 +2,4 @@
 exclude_paths:
   - .github/
   - files/agent-loki.yaml
+  - .pre-commit-config.yaml
