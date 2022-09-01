@@ -4,7 +4,7 @@ galaxy_info:
   description: Installs and configures Longhorn storage driver on a Kubernetes cluster.
   license: GPLv3
 
-  min_ansible_version: 2.1
+  min_ansible_version: "2.1"
 
   platforms:
     - name: Ubuntu

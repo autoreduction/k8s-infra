@@ -8,6 +8,7 @@
     - dannixon.system.inspection_tools
     - dannixon.system.interactive_users
     - dannixon.services.sshd
+    - dannixon.services.grafana_agent
     - isis_archive
     - isis_cephfs
 

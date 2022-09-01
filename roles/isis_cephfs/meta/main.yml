@@ -4,7 +4,7 @@ galaxy_info:
   description: Configures automatic mounting of the CEPH storage cluster.
   license: GPLv3
 
-  min_ansible_version: 2.1
+  min_ansible_version: "2.1"
 
   platforms:
     - name: Ubuntu
